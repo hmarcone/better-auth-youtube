@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { TwitchLogo } from "@phosphor-icons/react";
-
+import { authClient } from "@/lib/auth-client"
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -34,8 +34,38 @@ export function LoginForm() {
   })
 
   async function onSubmit(formData: LoginFormValues) {
+    await authClient.signIn.email({
+      email: formData.email,
+      password: formData.password,
+      callbackURL: "/dashboard"
+    },
+    {
+      onRequest: (ctx) => {
 
+      },
+      onSuccess: (ctx) => {
+        console.log("Usuário logado com sucesso:", ctx)
+        router.replace("/dashboard")
+      },
+      onError: (ctx) => {
+        console.log("Erro ao fazer login:", ctx.error)
+        console.log("Erro ao fazer login:", ctx.error.message)
+        console.log(ctx)
 
+        if(ctx.error.code === "INVALID_EMAIL_OR_PASSWORD") {
+          //form.setError("email", { message: "Email ou senha inválidos" })
+          //form.setError("password", { message: "Email ou senha inválidos" })
+          alert("Email ou senha inválidos")
+        }
+      }
+    })
+  }
+
+  async function handleSignInWithTwitch() {
+    await authClient.signIn.social({
+      provider: "twitch",
+      callbackURL: "/dashboard"
+    })
   }
 
   return (
@@ -115,7 +145,7 @@ export function LoginForm() {
           type="button"
           variant="outline"
           className="w-full bg-[#9146FF] text-white hover:bg-[#7d3bdf] hover:text-white"
-          onClick={async () => { }}
+          onClick={handleSignInWithTwitch}
         >
           <TwitchLogo className="mr-2 h-4 w-4" />
           Entrar com Twitch
